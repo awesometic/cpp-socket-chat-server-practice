@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Stuffs to be excepted of this project
+bin/*
+build/*

@@ -1,25 +1,36 @@
-CC = g++
-SERV_TARGET = server
-SERV_SRC = server.cpp
-SERV_OBJS = server.o
-CLI_TARGET = client
-CLI_SRC = client.cpp
-CLI_OBJS = client.o
+CXX = clang++
+CXXFLAGS = \
+	-Wall \
+	-std=c++17
+MAKE = make
 
 ifneq ($V,1)
 Q ?= @
 endif
 
-.PHONY = all clean
+CUR_DIR = $(shell pwd)
+PROJ_SRC_DIR = $(CUR_DIR)/src
+BUILD_DIR = $(CUR_DIR)/build
+TARGET_DIR = $(CUR_DIR)/bin
 
-all: $(SERV_TARGET) $(CLI_TARGET)
+export CXX CXXFLAGS MAKE Q BUILD_DIR TARGET_DIR
 
-$(SERV_TARGET): $(SERV_SRC)
-	$(Q) $(CC) -o $@ $^
+default_to_src := \
+	$(Q) $(shell mkdir -p $(BUILD_DIR)) \
+	$(Q) $(shell mkdir -p $(TARGET_DIR)) \
+	$(Q) $(MAKE) -C $(PROJ_SRC_DIR) $@
 
-$(CLI_TARGET): $(CLI_SRC)
-	$(Q) $(CC) -o $@ $^
+all:
+	$(call default_to_src)
+
+server:
+	$(call default_to_src)
+
+client:
+	$(call default_to_src)
 
 clean:
-	rm -f *.o
-	rm -f $(SERV_TARGET) $(CLI_TARGET)
+	rm -f $(BUILD_DIR)/*
+	rm -f $(TARGET_DIR)/*
+
+.PHONY = all server client clean
