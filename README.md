@@ -2,7 +2,9 @@
 
 ## What this project for
 
-A simple project for study Modern C++, Makefile and socket communication
+A simple project for study Modern C++, Makefile and socket communication.
+
+This project also contains its dedicated client program but I hope I can create another one by a different language like Go or Flutter.
 
 ## The list I'm going to do that I hope
 
