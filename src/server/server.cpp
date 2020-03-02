@@ -1,65 +1,76 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include "server.hpp"
+#include "log.hpp"
 
-void error(const char * msg) {
-    perror(msg);
-    exit(1);
-}
+/**
+ * Steps of TCP/IP socket communication - Server
+ * 1. socket()
+ * 2. bind()
+ * 3. listen()
+ * 4. accept() when a client does connect()
+ * 5. read() / write() when a client does the same thing
+ * 6. close()
+ */
 
-int main(int argc, char *argv[]) {
-    /**
-     * Steps of TCP/IP socket communication - Server
-     * 1. socket()
-     * 2. bind()
-     * 3. listen()
-     * 4. accept() when a client does connect()
-     * 5. read() / write() when a client does the same thing
-     * 6. close()
-    */
+namespace socketchatserver {
 
-    int sock_fd, new_sock_fd, port_no;
-    socklen_t cli_len;
-    char buffer[256];
-    struct sockaddr_in serv_addr, cli_addr;
-    int n;
-
-    if (argc < 2) {
-        fprintf(stderr, "ERROR, no port provided. \n");
-        exit(1);
+Server::Server(int portNo) {
+    socketFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketFd < 0) {
+        Log::e("Cannot open socket.");
     }
 
-    sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock_fd < 0)
-        error("ERROR opening socket");
+    bzero((char *) &(serverAddr), sizeof(serverAddr));
+    this->portNo = portNo;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(this->portNo);
+    if (bind(socketFd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0)
+        Log::e("Cannot binding the socket file description.");
+}
 
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    port_no = atoi(argv[1]);
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(port_no);
-    if (bind(sock_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        error("ERROR on binding");
-    listen(sock_fd, 5);
+Server::~Server() {
+    close(newSocketFd);
+    close(socketFd);
+}
 
-    cli_len = sizeof(cli_addr);
-    new_sock_fd = accept(sock_fd, (struct sockaddr *) &cli_addr, &cli_len);
-    if (new_sock_fd < 0)
-        error("ERROR on accept");
+bool Server::isSocketOpened() {
+    return socketFd < 0 ? false : true;
+}
+
+void Server::listenStart() {
+    if (listen(socketFd, 5) < 0)
+        Log::e("Failed to set it up to listen state.");
+}
+
+void Server::acceptStart() {
+    clientLength = sizeof(clientAddr);
+    newSocketFd = accept(socketFd, (struct sockaddr *) &clientAddr, (socklen_t *) &clientLength);
+    if (newSocketFd < 0)
+        Log::e("Cannot start accept.");
+}
+
+void Server::socketRead() {
+    char buffer[256];
 
     bzero(buffer, 256);
-    n = read(new_sock_fd, buffer, 255);
-    if (n < 0) error("ERROR reading from socket");
-    printf("Here is the message: %s\n", buffer);
-    n = write(new_sock_fd, "I got your message", 18);
-    if (n < 0) error("ERROR writing to socket");
+    if (read(newSocketFd, buffer, 255) < 0)
+        Log::e("Reading from the socket.");
 
-    close(new_sock_fd);
-    close(sock_fd);
+    printf("From client: %s\n", buffer);
+}
 
-    return 0;
+void Server::socketWrite() {
+    char buffer[256];
+
+    bzero(buffer, 256);
+    if (write(newSocketFd, "I got your message", 18) < 0)
+        Log::e("Writing to the socket.");
+}
 }

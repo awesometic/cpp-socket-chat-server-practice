@@ -2,7 +2,7 @@ TARGET = $(TARGET_DIR)/client
 
 SRC_DIR = $(shell pwd)
 SRC_EXT = cpp
-SOURCES = $(shell find $(SRC_DIR) -type f -name *.$(SRC_EXT))
+SOURCES = $(shell find $(SRC_DIR) -type f -name '*.$(SRC_EXT)')
 OBJECTS = $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES:.$(SRC_EXT)=.o))
 
 all: $(TARGET)
