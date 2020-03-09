@@ -32,5 +32,7 @@
 *.app
 
 # Stuffs to be excepted of this project
+.vscode
+.vscode/*
 bin/*
 build/*
