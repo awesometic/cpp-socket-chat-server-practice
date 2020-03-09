@@ -24,9 +24,10 @@ Getting be familiar with Makefile by writing them from scratch. Then, I hope I w
 
 I have a little bit of knowledge about TDD on Python but haven't on the other languages.
 
-## References for this project
+## References where could be helpful
 
 - http://www.linuxhowtos.org/C_C++/socket.htm
+- https://www.geeksforgeeks.org/socket-programming-cc/
 - https://google.github.io/styleguide/cppguide.html
 - https://hiltmon.com/blog/2015/09/28/the-simple-c-plus-plus-makefile-executable-edition/
 - http://forum.falinux.com/zbxe/index.php?document_srl=429387&mid=C_LIB
