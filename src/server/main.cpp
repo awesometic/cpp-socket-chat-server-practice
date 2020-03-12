@@ -19,8 +19,6 @@ int main(int argc, char *argv[]) {
 
     server.listenStart();
     server.acceptStart();
-    server.socketRead();
-    server.socketWrite();
 
     return 0;
 }
