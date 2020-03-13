@@ -14,7 +14,7 @@ void Log::v(const char *fmt, ...) {
     vsprintf(msg, fmt, ap);
     va_end(ap);
 
-    printf("Verbose: %s\n", msg);
+    printf("Verbose\t: %s\n", msg);
 }
 
 void Log::d(const char *fmt, ...) {
@@ -25,7 +25,7 @@ void Log::d(const char *fmt, ...) {
     vsprintf(msg, fmt, ap);
     va_end(ap);
 
-    printf("Debug: %s\n", msg);
+    printf("Debug\t: %s\n", msg);
 }
 
 void Log::i(const char *fmt, ...) {
@@ -36,7 +36,7 @@ void Log::i(const char *fmt, ...) {
     vsprintf(msg, fmt, ap);
     va_end(ap);
 
-    printf("Info: %s\n", msg);
+    printf("Info\t: %s\n", msg);
 }
 
 void Log::w(const char *fmt, ...) {
@@ -47,7 +47,7 @@ void Log::w(const char *fmt, ...) {
     vsprintf(msg, fmt, ap);
     va_end(ap);
 
-    printf("Warning: %s\n", msg);
+    printf("Warning\t: %s\n", msg);
 }
 
 void Log::e(const char *fmt, ...) {
@@ -59,9 +59,9 @@ void Log::e(const char *fmt, ...) {
     va_end(ap);
 
     if (errno == 0) {
-        printf("Error: %s\n", msg);
+        printf("Error\t: %s\n", msg);
     } else {
-        fprintf(stderr, "Error: %s: %s\n", msg, strerror(errno));
+        fprintf(stderr, "Error\t: %s: %s\n", msg, strerror(errno));
     }
 }
 }

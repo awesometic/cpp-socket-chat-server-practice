@@ -15,12 +15,13 @@ class Server {
         ~Server();
 
         bool isSocketOpened();
-        void listenStart();
-        void acceptStart();
+        void start();
+        int currentActiveUsers();
 
     private:
         int portNo;
-        int socketFd, newSocketFd;
+        int socketFd;
+        int newSocketFd[MAX_CONNECTIONS] = { -1, };
         socklen_t serverStorageAddrSize;
         sockaddr_in serverAddr;
         sockaddr_storage serverStorage;

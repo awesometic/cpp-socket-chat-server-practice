@@ -48,8 +48,10 @@ int main(int argc, char *argv[])
         printf("Enter the message (/q to quit): ");
         fgets(buffer, sizeof buffer, stdin);
 
-        if (!strcmp(buffer, "q\n"))
+        if (!strcmp(buffer, "q\n")) {
+            fprintf(stdout," INFO will close the program\n");
             break;
+        }
 
         if (send(sockfd, buffer, sizeof buffer, 0) < 0) {
             fprintf(stderr," ERROR failed to send a message\n");
