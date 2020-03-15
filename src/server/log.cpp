@@ -4,6 +4,10 @@
 #include <cerrno>
 #include "log.hpp"
 
+#ifndef DEBUG_MODE
+#define DEBUG_MODE 0
+#endif
+
 namespace socketchatserver {
 
 void Log::v(const char *fmt, ...) {
@@ -20,12 +24,14 @@ void Log::v(const char *fmt, ...) {
 void Log::d(const char *fmt, ...) {
     char msg[1024] = { 0, };
 
-    va_list ap;
-    va_start(ap, fmt);
-    vsprintf(msg, fmt, ap);
-    va_end(ap);
+    if (DEBUG_MODE) {
+        va_list ap;
+        va_start(ap, fmt);
+        vsprintf(msg, fmt, ap);
+        va_end(ap);
 
-    printf("Debug\t: %s\n", msg);
+        printf("Debug\t: %s\n", msg);
+    }
 }
 
 void Log::i(const char *fmt, ...) {

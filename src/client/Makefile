@@ -13,6 +13,6 @@ $(TARGET): $(OBJECTS)
 
 $(CLIENT_BUILD_DIR)/%.o: $(SRC_DIR)/%.$(SRC_EXT)
 	@echo "Compiling $<..."
-	$(Q) $(CXX) $(CXXFLAGS) -c -o $@ $^
+	$(Q) $(CXX) $(CXXFLAGS) -c -o $@ $^ -D DEBUG_MODE=$(DEBUG)
 
 .PHONY = all

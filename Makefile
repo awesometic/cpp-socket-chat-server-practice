@@ -8,6 +8,10 @@ ifneq ($V,1)
 Q ?= @
 endif
 
+ifneq ($DEBUG,1)
+DEBUG ?= 0
+endif
+
 CUR_DIR = $(shell pwd)
 PROJ_SRC_DIR = $(CUR_DIR)/src
 BUILD_DIR_BASE = $(CUR_DIR)/build
@@ -15,7 +19,8 @@ SERVER_BUILD_DIR = $(BUILD_DIR_BASE)/server
 CLIENT_BUILD_DIR = $(BUILD_DIR_BASE)/client
 TARGET_DIR = $(CUR_DIR)/bin
 
-export CXX CXXFLAGS MAKE Q BUILD_DIR_BASE SERVER_BUILD_DIR CLIENT_BUILD_DIR TARGET_DIR
+export CXX CXXFLAGS MAKE Q DEBUG
+export SERVER_BUILD_DIR CLIENT_BUILD_DIR TARGET_DIR
 
 default_to_src := \
 	$(Q) $(shell mkdir -p $(SERVER_BUILD_DIR) $(CLIENT_BUILD_DIR) $(TARGET_DIR)) \
