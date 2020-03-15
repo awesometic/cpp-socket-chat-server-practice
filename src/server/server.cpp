@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include "server.hpp"
+#include "utils.hpp"
 #include "log.hpp"
 
 // To keep compatibility with macOS
@@ -133,7 +134,8 @@ void clientThreadHandler(int clientIndex, int *newSocketFds) {
     int recvRet;
     int newSocketFd = newSocketFds[clientIndex];
     char clientMessage[EACH_MSG_SIZE], buffer[EACH_MSG_SIZE];
-    char *message, dummyData;
+    char dummyData;
+    std::string message;
 
     while (recv(newSocketFd, &dummyData, 1, MSG_PEEK) != 0) {
         recvRet = recv(newSocketFd, clientMessage, EACH_MSG_SIZE, 0);
@@ -142,15 +144,15 @@ void clientThreadHandler(int clientIndex, int *newSocketFds) {
             Log::e("Receiving data error by $d socket", newSocketFd);
             break;
         } else {
-            message = (char *) malloc(sizeof clientMessage + 1);
-            strcpy(message, clientMessage);
-            strcat(message, "\n");
-            strcpy(buffer, message);
-            free(message);
+            message = std::string_view(clientMessage);
+            StringHelper::trim(message);
+
+            if (message.empty())
+                continue;
 
             for (int i = 0; i < MAX_CONNECTIONS; i++) {
                 if (i != clientIndex && newSocketFds[i] > 0) {
-                    if (send(newSocketFds[i], buffer, sizeof buffer, 0) < 0) {
+                    if (send(newSocketFds[i], message.c_str(), sizeof buffer, 0) < 0) {
                         Log::e("Sending data error by $d socket", newSocketFds[i]);
                     }
                 }

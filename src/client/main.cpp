@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if (send(sockfd, buffer, sizeof buffer, 0) < 0) {
+        if (sizeof buffer > 2 && send(sockfd, buffer, sizeof buffer, 0) < 0) {
             fprintf(stderr," ERROR failed to send a message\n");
             break;
         }
