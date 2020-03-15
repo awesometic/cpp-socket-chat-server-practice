@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,12 +14,26 @@ void error(const char *msg)
     exit(0);
 }
 
+void getMessageFromServer(int sockfd) {
+    char buffer[1024];
+
+    while (true) {
+        if (recv(sockfd, buffer, sizeof buffer, 0) <= 0) {
+            fprintf(stderr, "ERROR disconnected to server");
+            break;
+        }
+
+        printf("Message from server: %s\n", buffer);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     int sockfd, portno;
     struct sockaddr_in serv_addr;
     struct hostent *server;
     char buffer[1024];
+    std::thread msgRecvThread;
 
     if (argc < 3) {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
@@ -44,6 +59,7 @@ int main(int argc, char *argv[])
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         error("ERROR connecting");
 
+    msgRecvThread = std::thread(getMessageFromServer, sockfd);
     while (true) {
         printf("Enter the message (/q to quit): ");
         fgets(buffer, sizeof buffer, stdin);
@@ -57,14 +73,10 @@ int main(int argc, char *argv[])
             fprintf(stderr," ERROR failed to send a message\n");
             break;
         }
-
-        if (recv(sockfd, buffer, sizeof buffer, 0) <= 0) {
-            fprintf(stderr, "ERROR disconnected to server");
-        }
-
-        printf("Message from server: %s\n", buffer);
     }
 
+    if (msgRecvThread.joinable())
+        msgRecvThread.join();
     close(sockfd);
     return 0;
 }

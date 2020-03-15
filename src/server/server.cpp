@@ -148,9 +148,12 @@ void clientThreadHandler(int clientIndex, int *newSocketFds) {
             strcpy(buffer, message);
             free(message);
 
-            if (send(newSocketFd, buffer, sizeof buffer, 0) < 0) {
-                Log::e("Sending data error by $d socket", newSocketFd);
-                break;
+            for (int i = 0; i < MAX_CONNECTIONS; i++) {
+                if (i != clientIndex && newSocketFds[i] > 0) {
+                    if (send(newSocketFds[i], buffer, sizeof buffer, 0) < 0) {
+                        Log::e("Sending data error by $d socket", newSocketFds[i]);
+                    }
+                }
             }
         }
     }
