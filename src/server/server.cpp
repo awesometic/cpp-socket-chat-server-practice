@@ -59,14 +59,14 @@ void Server::start() {
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
         serverStorageAddrSize = sizeof serverStorage;
         newSocketFds[i] = accept(socketFd, (struct sockaddr *) &serverStorage, &serverStorageAddrSize);
-        clientThreads[i] = std::thread(clientThreadHandler, newSocketFds[i]);
+        clientThreads[i] = std::thread(clientThreadHandler, i, newSocketFds);
         setTcpKeepaliveCfg(newSocketFds[i]);
 
         if (getsockname(newSocketFds[i], (struct sockaddr *) &clientAddr, &serverStorageAddrSize) > 0)
             Log::e("Error to get an information of the new client");
         else {
             Log::i("Accept a new client: %s", inet_ntoa(clientAddr.sin_addr));
-            // Log::i("Current user counts: %d", getCurrentActiveUsers());
+            Log::i("Current user counts: %d", getCurrentActiveUsers());
         }
     }
 }
@@ -84,17 +84,13 @@ bool Server::isClientAlive(int newSocketFd) {
 }
 
 int Server::getCurrentActiveUsers() {
-    // TODO: Corrupted codes
-    int ret, cnt = 0;
+    int cnt = 0;
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
         if (newSocketFds[i] < 0)
             continue;
-
-        if (ret = isClientAlive(newSocketFds[i]); ret != 0)
+        else if (newSocketFds[i] != 0)
             cnt++;
-        else
-            newSocketFds[i] = -1;
     }
 
     return cnt;
@@ -141,8 +137,9 @@ void Server::setTcpKeepaliveCfg(int newSocketFd) {
     Log::d("Set TCP_KEEPINTVL to %d", clientKeepaliveConfig.keepintvl);
 }
 
-void clientThreadHandler(int newSocketFd) {
+void clientThreadHandler(int clientIndex, int *newSocketFds) {
     int recvRet;
+    int newSocketFd = newSocketFds[clientIndex];
     char clientMessage[EACH_MSG_SIZE], buffer[EACH_MSG_SIZE];
     char *message, dummyData;
 
@@ -167,6 +164,7 @@ void clientThreadHandler(int newSocketFd) {
     }
 
     Log::i("Client %d disconnected", newSocketFd);
+    newSocketFds[clientIndex] = -1;
     close(newSocketFd);
 }
 }

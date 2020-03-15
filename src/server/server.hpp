@@ -38,5 +38,5 @@ class Server {
         std::thread clientThreads[MAX_CONNECTIONS];
 };
 
-void clientThreadHandler(int);
+void clientThreadHandler(int, int*);
 }
