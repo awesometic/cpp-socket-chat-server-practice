@@ -9,19 +9,28 @@
 
 namespace socketchatserver {
 
+struct KeepaliveConfig {
+    int keepidle;
+    int keepcnt;
+    int keepintvl;
+};
+
 class Server {
     public:
         Server(int);
         ~Server();
 
-        bool isSocketOpened();
         void start();
-        int currentActiveUsers();
+        bool isSocketOpened();
+        bool isClientAlive(int);
+        int getCurrentActiveUsers();
+        void setTcpKeepaliveCfg(int);
 
     private:
         int portNo;
         int socketFd;
-        int newSocketFd[MAX_CONNECTIONS] = { -1, };
+        int newSocketFds[MAX_CONNECTIONS] = { -1, };
+        struct KeepaliveConfig clientKeepaliveConfig;
         socklen_t serverStorageAddrSize;
         sockaddr_in serverAddr;
         sockaddr_storage serverStorage;

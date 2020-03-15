@@ -4,11 +4,17 @@
 #include <thread>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include "server.hpp"
 #include "log.hpp"
+
+// To keep compatibility with macOS
+#if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
 
 namespace socketchatserver {
 
@@ -26,6 +32,10 @@ Server::Server(int portNo) {
     if (bind(socketFd, (struct sockaddr *) &serverAddr, sizeof serverAddr) < 0)
         Log::e("Cannot binding the socket file description");
 
+    clientKeepaliveConfig.keepcnt = 5;
+    clientKeepaliveConfig.keepidle = 7200;
+    clientKeepaliveConfig.keepintvl = 1;
+
     Log::i("Server started with port # %d", this->portNo);
 }
 
@@ -33,14 +43,10 @@ Server::~Server() {
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
         if (clientThreads[i].joinable()) {
             clientThreads[i].join();
-            close(newSocketFd[i]);
+            close(newSocketFds[i]);
         }
     }
     close(socketFd);
-}
-
-bool Server::isSocketOpened() {
-    return socketFd < 0 ? false : true;
 }
 
 void Server::start() {
@@ -52,24 +58,97 @@ void Server::start() {
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
         serverStorageAddrSize = sizeof serverStorage;
-        newSocketFd[i] = accept(socketFd, (struct sockaddr *) &serverStorage, &serverStorageAddrSize);
-        clientThreads[i] = std::thread(clientThreadHandler, newSocketFd[i]);
+        newSocketFds[i] = accept(socketFd, (struct sockaddr *) &serverStorage, &serverStorageAddrSize);
+        clientThreads[i] = std::thread(clientThreadHandler, newSocketFds[i]);
+        setTcpKeepaliveCfg(newSocketFds[i]);
 
-        if (getsockname(newSocketFd[i], (struct sockaddr *) &clientAddr, &serverStorageAddrSize) > 0)
+        if (getsockname(newSocketFds[i], (struct sockaddr *) &clientAddr, &serverStorageAddrSize) > 0)
             Log::e("Error to get an information of the new client");
         else {
             Log::i("Accept a new client: %s", inet_ntoa(clientAddr.sin_addr));
+            // Log::i("Current user counts: %d", getCurrentActiveUsers());
         }
     }
 }
 
-void clientThreadHandler(int socketFd) {
-    int newSocketFd = socketFd;
+bool Server::isSocketOpened() {
+    return socketFd >= 0;
+}
+
+bool Server::isClientAlive(int newSocketFd) {
+    // TODO: Maybe this should run as async mode
+    // TODO: and/or needs to be changed to the other way
+    char dummyData;
+
+    return recv(newSocketFd, &dummyData, 1, MSG_PEEK);
+}
+
+int Server::getCurrentActiveUsers() {
+    // TODO: Corrupted codes
+    int ret, cnt = 0;
+
+    for (int i = 0; i < MAX_CONNECTIONS; i++) {
+        if (newSocketFds[i] < 0)
+            continue;
+
+        if (ret = isClientAlive(newSocketFds[i]); ret != 0)
+            cnt++;
+        else
+            newSocketFds[i] = -1;
+    }
+
+    return cnt;
+}
+
+/** Set the keepalive options on the socket
+* This also enables TCP keepalive on the socket
+*
+* @param fd file descriptor
+* @param fd file descriptor
+* @return 0 on success -1 on failure
+*/
+void Server::setTcpKeepaliveCfg(int newSocketFd) {
+    // TODO: Set them to make sure avoiding zombie socket
+    // TODO: but don't know how it works exactly
+    // TODO: so that it needs to be looked into again later
+    int ret, optVal = 1;
+
+    if (ret = setsockopt(newSocketFd,
+        SOL_SOCKET, SO_KEEPALIVE,
+        &optVal, sizeof optVal); ret != 0)
+        Log::e("Cannot set TCP keepalive to be activated");
+    Log::d("Activate TCP keepalive");
+
+    if (ret = setsockopt(newSocketFd,
+        IPPROTO_TCP, TCP_KEEPCNT,
+        &clientKeepaliveConfig.keepcnt,
+        sizeof clientKeepaliveConfig.keepcnt); ret != 0)
+        Log::e("TCP_KEEPCNT cannot be set");
+    Log::d("Set TCP_KEEPCNT to %d", clientKeepaliveConfig.keepcnt);
+
+    if (ret = setsockopt(newSocketFd,
+        IPPROTO_TCP, TCP_KEEPIDLE,
+        &clientKeepaliveConfig.keepidle,
+        sizeof clientKeepaliveConfig.keepidle); ret != 0)
+        Log::e("TCP_KEEPIDLE/TCP_KEEPALIVE cannot be set");
+    Log::d("Set TCP_KEEPIDLE/TCP_KEEPALIVE to %d", clientKeepaliveConfig.keepidle);
+
+    if (ret = setsockopt(newSocketFd,
+        IPPROTO_TCP, TCP_KEEPINTVL,
+        &clientKeepaliveConfig.keepintvl,
+        sizeof clientKeepaliveConfig.keepintvl); ret != 0)
+        Log::e("TCP_KEEPINTVL cannot be set");
+    Log::d("Set TCP_KEEPINTVL to %d", clientKeepaliveConfig.keepintvl);
+}
+
+void clientThreadHandler(int newSocketFd) {
     int recvRet;
     char clientMessage[EACH_MSG_SIZE], buffer[EACH_MSG_SIZE];
     char *message, dummyData;
 
-    while ((recvRet = recv(newSocketFd, clientMessage, EACH_MSG_SIZE, 0))) {
+    while (recv(newSocketFd, &dummyData, 1, MSG_PEEK) != 0) {
+        recvRet = recv(newSocketFd, clientMessage, EACH_MSG_SIZE, 0);
+
         if (recvRet < 0) {
             Log::e("Receiving data error by $d socket", newSocketFd);
             break;
@@ -85,13 +164,9 @@ void clientThreadHandler(int socketFd) {
                 break;
             }
         }
-
-        if (recv(newSocketFd, &dummyData, 1, MSG_PEEK) == 0) {
-            Log::i("Client %d disconnected", newSocketFd);
-            break;
-        }
     }
 
+    Log::i("Client %d disconnected", newSocketFd);
     close(newSocketFd);
 }
 }
