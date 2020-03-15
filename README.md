@@ -24,6 +24,10 @@ Getting be familiar with Makefile by writing them from scratch. Then, I hope I w
 
 I have a little bit of knowledge about TDD on Python but haven't on the other languages.
 
+## Current status of this practice
+
+![current status](docs/2020-03-15_18.55.12_current_status.png)
+
 ## References where could be helpful
 
 - http://www.linuxhowtos.org/C_C++/socket.htm
