@@ -22,8 +22,6 @@ class Server {
 
         void start();
         bool isSocketOpened();
-        int getCurrentActiveUsers();
-        void setTcpKeepaliveCfg(int);
 
     private:
         int portNo;
@@ -33,8 +31,10 @@ class Server {
         socklen_t serverStorageAddrSize;
         sockaddr_in serverAddr;
         sockaddr_storage serverStorage;
-
         std::thread clientThreads[MAX_CONNECTIONS];
+
+        void setTcpKeepaliveCfg(int);
+        int getCurrentActiveUsers();
 };
 
 void clientThreadHandler(int, int*);
