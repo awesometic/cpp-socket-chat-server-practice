@@ -22,7 +22,6 @@ class Server {
 
         void start();
         bool isSocketOpened();
-        bool isClientAlive(int);
         int getCurrentActiveUsers();
         void setTcpKeepaliveCfg(int);
 

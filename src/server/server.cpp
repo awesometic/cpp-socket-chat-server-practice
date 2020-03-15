@@ -75,14 +75,6 @@ bool Server::isSocketOpened() {
     return socketFd >= 0;
 }
 
-bool Server::isClientAlive(int newSocketFd) {
-    // TODO: Maybe this should run as async mode
-    // TODO: and/or needs to be changed to the other way
-    char dummyData;
-
-    return recv(newSocketFd, &dummyData, 1, MSG_PEEK);
-}
-
 int Server::getCurrentActiveUsers() {
     int cnt = 0;
 
